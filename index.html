@@ -9,126 +9,98 @@
     <style>
         :root { --muji-red: #7F0019; --muji-bg: #f4f1f0; }
         body { font-family: "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif; background: var(--muji-bg); margin: 0; display: flex; justify-content: center; }
-        #app { width: 100%; max-width: 450px; background: #fff; min-height: 100vh; padding: 30px 20px; box-sizing: border-box; text-align: center; }
+        #app { width: 100%; max-width: 450px; background: #fff; min-height: 100vh; padding: 0; box-sizing: border-box; text-align: center; }
+        .content-padding { padding: 20px; }
         .hidden { display: none; }
-        .card { border: 1px solid #ddd; padding: 25px; background: white; margin-top: 10px; text-align: center; }
-        .result-type { font-size: 24px; color: var(--muji-red); font-weight: bold; margin: 15px 0; letter-spacing: 1px; }
+        
+        /* 首頁圖樣式 */
+        .hero-img { width: 100%; height: auto; display: block; margin-bottom: 20px; }
+        
+        .card { border: 1px solid #ddd; padding: 20px; background: white; margin-top: 10px; text-align: center; }
+        .result-type { font-size: 24px; color: var(--muji-red); font-weight: bold; margin: 10px 0; letter-spacing: 1px; }
         .product-box { background: #f9f9f9; padding: 15px; margin: 15px 0; text-align: left; border-left: 4px solid var(--muji-red); }
+        
         .btn { background: var(--muji-red); color: #fff; border: none; padding: 16px; width: 100%; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .option-btn { background: #fff; color: #333; border: 1px solid #ccc; margin-bottom: 12px; text-align: left; padding: 16px; width: 100%; cursor: pointer; font-size: 15px; line-height: 1.4; }
-        .option-btn:hover { background: #fdfdfd; border-color: #888; }
+        
         #dynamic-content img { width: 100%; border: 1px solid #eee; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .progress { font-size: 12px; color: #999; margin-bottom: 10px; letter-spacing: 1px; }
-        .step-hint { font-size: 15px; color: var(--muji-red); font-weight: bold; margin: 20px 0; }
+        .progress { font-size: 12px; color: #999; margin-bottom: 10px; }
+        .step-hint { font-size: 14px; color: var(--muji-red); font-weight: bold; margin: 15px 0; }
+        
+        /* QR Code 顯示容器 */
+        #qr-display-box { display: flex; justify-content: center; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="quiz-part">
-        <h2 style="color:var(--muji-red); letter-spacing: 3px;">MUJI 無印良品</h2>
-        <p style="font-size: 14px; color: #666; margin-bottom: 30px;">膚質測驗小遊戲</p>
-        <div class="progress" id="progress">第 1 題 / 共 6 題</div>
-        <h3 id="q-text" style="margin-bottom: 25px; font-size: 18px;">正在載入題目...</h3>
-        <div id="options"></div>
+    <div id="start-screen">
+        <img src="https://raw.githubusercontent.com/googleusercontent/image_generation_content/main/0.png" class="hero-img" alt="MUJI Skincare">
+        <div class="content-padding">
+            <h2 style="color:var(--muji-red); letter-spacing: 3px;">MUJI 無印良品</h2>
+            <h3 style="font-weight: normal; margin-top: 0;">膚質測驗小遊戲</h3>
+            <p style="color: #666; font-size: 14px;">點選您的肌膚狀況，獲取專屬保養建議</p>
+            <button class="btn" onclick="startQuiz()">開始檢測</button>
+        </div>
+    </div>
+
+    <div id="quiz-part" class="hidden">
+        <div class="content-padding">
+            <div class="progress" id="progress">第 1 題 / 共 6 題</div>
+            <h3 id="q-text" style="margin-bottom: 25px; font-size: 18px;">正在載入題目...</h3>
+            <div id="options"></div>
+        </div>
     </div>
 
     <div id="result-part" class="hidden">
-        <div id="capture-area" class="card">
-            <div style="font-size: 12px; color: #888; letter-spacing: 2px;">SKINCARE REPORT</div>
-            <div style="margin-top: 10px; font-size: 16px;">檢測結果：你是...</div>
-            <div class="result-type" id="res-name"></div>
-            <p id="res-desc" style="font-size: 14px; color: #444; line-height: 1.6;"></p>
-            
-            <div class="product-box">
-                <div style="font-weight: bold; font-size: 14px;">推薦保養系列：</div>
-                <div id="res-prod" style="font-size: 15px; margin-top: 5px;"></div>
+        <div class="content-padding">
+            <div id="capture-area" class="card">
+                <div style="font-size: 10px; color: #888; letter-spacing: 2px;">SKINCARE REPORT</div>
+                <div class="result-type" id="res-name"></div>
+                <p id="res-desc" style="font-size: 13px; color: #444; line-height: 1.6;"></p>
+                
+                <div class="product-box">
+                    <div style="font-weight: bold; font-size: 13px;">推薦保養系列：</div>
+                    <div id="res-prod" style="font-size: 14px; margin-top: 5px;"></div>
+                </div>
+
+                <div style="text-align: left; font-size: 12px; color: #666; line-height: 1.7;" id="res-tips"></div>
+                <p style="font-size: 9px; color: #ccc; margin-top: 15px;">© MUJI Taiwan</p>
             </div>
 
-            <div style="text-align: left; font-size: 13px; color: #666; line-height: 1.7;" id="res-tips"></div>
-            <p style="font-size: 10px; color: #ccc; margin-top: 20px;">© MUJI Taiwan All Rights Reserved.</p>
+            <p class="step-hint" id="action-hint">正在產生您的保養指南...</p>
+            <div id="dynamic-content"></div>
+            
+            <button class="btn" style="background:#666; margin-top: 20px;" onclick="goToStart()">重新測驗</button>
         </div>
-
-        <p class="step-hint" id="action-hint">正在產生您的保養指南...</p>
-        <div id="dynamic-content"></div>
-        
-        <button class="btn" style="background:#666; margin-top: 30px;" onclick="goToStart()">重新測驗</button>
     </div>
 </div>
 
 <script>
-    // 依據 PPT 調整的 6 個題目
     const questions = [
-        {
-            q: "您洗臉後的狀態是？",
-            options: [
-                { t: "T字部位油、兩頰乾", type: "mixed" },
-                { t: "全臉出油", type: "oily" },
-                { t: "緊繃乾燥", type: "dry" },
-                { t: "不油不乾", type: "normal" },
-                { t: "紅癢刺痛", type: "sensitive" }
-            ]
-        },
-        {
-            q: "是否常出現局部油、局部脫皮的狀況？",
-            options: [
-                { t: "是", type: "mixed" },
-                { t: "否", type: "normal" },
-                { t: "常常整臉油光", type: "oily" }
-            ]
-        },
-        {
-            q: "是否容易冒痘與毛孔粗大？",
-            options: [
-                { t: "是", type: "oily" },
-                { t: "否（只是出油）", type: "mixed" },
-                { t: "還有紅腫痛癢問題", type: "sensitive" }
-            ]
-        },
-        {
-            q: "肌膚是否經常脫皮或粉底卡紋？",
-            options: [
-                { t: "是", type: "dry" },
-                { t: "不會（但容易癢）", type: "sensitive" },
-                { t: "不會（但額頭及鼻子經常泛油光）", type: "mixed" }
-            ]
-        },
-        {
-            q: "肌膚在換季時的狀態是否依然穩定？",
-            options: [
-                { t: "是（沒有太大影響）", type: "normal" },
-                { t: "有時會泛紅", type: "sensitive" },
-                { t: "不時出油或脫皮", type: "mixed" }
-            ]
-        },
-        {
-            q: "你是否很難找到適合的保養品？",
-            options: [
-                { t: "是（很多產品使用後會刺癢）", type: "sensitive" },
-                { t: "大部分產品都能適應", type: "normal" }
-            ]
-        }
+        { q: "您洗臉後的狀態是？", options: [{t:"T字部位油、兩頰乾", type:"mixed"}, {t:"全臉出油", type:"oily"}, {t:"緊繃乾燥", type:"dry"}, {t:"不油不乾", type:"normal"}, {t:"紅癢刺痛", type:"sensitive"}] },
+        { q: "是否常出現局部油、局部脫皮的狀況？", options: [{t:"是", type:"mixed"}, {t:"否", type:"normal"}, {t:"常常整臉油光", type:"oily"}] },
+        { q: "是否容易冒痘與毛孔粗大？", options: [{t:"是", type:"oily"}, {t:"否（只是出油）", type:"mixed"}, {t:"還有紅腫痛癢問題", type:"sensitive"}] },
+        { q: "肌膚是否經常脫皮或粉底卡紋？", options: [{t:"是", type:"dry"}, {t:"不會（但容易癢）", type:"sensitive"}, {t:"不會（但額頭經常泛油光）", type:"mixed"}] },
+        { q: "肌膚在換季時的狀態是否依然穩定？", options: [{t:"是", type:"normal"}, {t:"有時會泛紅", type:"sensitive"}, {t:"不時出油或脫皮", type:"mixed"}] },
+        { q: "你是否很難找到適合的保養品？", options: [{t:"是（容易刺癢）", type:"sensitive"}, {t:"大部分產品都能適應", type:"normal"}] }
     ];
 
     const resultsData = {
-        mixed: { name: "混合性肌膚", desc: "T字部位容易泛油光，但兩頰卻感到乾燥。這是台灣最常見的膚質類型。", prod: "敏感肌化妝水(清爽型) + 導入精華液", tips: "• 分區保養：T字控油，兩頰補水<br>• 使用溫水洗臉<br>• 定期去角質改善粉刺" },
-        oily: { name: "油性肌膚", desc: "皮脂分泌旺盛，整臉容易油膩且毛孔明顯，容易產生粉刺豆豆。", prod: "清新保養系列 (草本清爽)", tips: "• 確實清潔但不過度洗臉<br>• 選擇清爽型凝膠保養<br>• 補充水分避免代償性出油" },
-        dry: { name: "乾性肌膚", desc: "肌膚缺乏油脂，經常感到緊繃、細紋明顯，且容易有脫皮現象。", prod: "高保濕敏感肌系列 + 乳霜", tips: "• 使用潤澤度高的乳霜鎖水<br>• 減少清潔次數<br>• 避免使用含酒精產品" },
-        sensitive: { name: "敏感性肌膚", desc: "肌膚屏障較薄，容易受到環境或化學物質刺激而紅癢。", prod: "敏感肌保養系列 (低刺激)", tips: "• 簡化保養步驟，避開香料<br>• 加強物理性防曬<br>• 測試新產品於耳後" },
-        normal: { name: "中性肌膚", desc: "非常理想的狀態！油水平衡，毛孔細緻，肌膚透亮有彈性。", prod: "溫和保養系列", tips: "• 維持目前的規律保養<br>• 隨季節微調保濕度<br>• 保持良好生活作息" }
+        mixed: { name: "混合性肌膚", desc: "T字部位易出油，兩頰較乾燥。台灣最常見的膚質。", prod: "敏感肌化妝水(清爽型)", tips: "• T字控油，兩頰補水<br>• 使用溫水洗臉" },
+        oily: { name: "油性肌膚", desc: "油脂分泌旺盛，容易感覺油膩且毛孔明顯。", prod: "清新保養系列 化妝水", tips: "• 確實清潔但不過度洗臉<br>• 選擇清爽型凝膠" },
+        dry: { name: "乾性肌膚", desc: "肌膚缺乏水分油脂，容易感到緊繃甚至脫皮。", prod: "高保濕敏感肌化妝水", tips: "• 使用潤澤度高的乳霜<br>• 減少洗臉次數" },
+        sensitive: { name: "敏感性肌膚", desc: "皮膚屏障較弱，容易因環境變化而泛紅。", prod: "敏感肌系列 (低刺激)", tips: "• 簡化保養步驟<br>• 避免酒精與香料" },
+        normal: { name: "中性肌膚", desc: "理想的平衡狀態，毛孔細緻且肌膚透亮。", prod: "溫和保養系列", tips: "• 維持現有規律保養<br>• 隨季節微調保濕度" }
     };
 
     let currentIdx = 0;
-    let scoreCount = { mixed:0, oily:0, dry:0, sensitive:0, normal:0 };
+    let scores = { mixed:0, oily:0, dry:0, sensitive:0, normal:0 };
 
-    function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const typeParam = urlParams.get('type');
-        if (typeParam && resultsData[typeParam]) {
-            renderResult(typeParam, true);
-        } else {
-            showQuestion();
-        }
+    function startQuiz() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-part').classList.remove('hidden');
+        showQuestion();
     }
 
     function showQuestion() {
@@ -137,33 +109,27 @@
         document.getElementById('q-text').innerText = q.q;
         const optionsDiv = document.getElementById('options');
         optionsDiv.innerHTML = '';
-
         q.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = opt.t;
-            btn.onclick = () => {
-                scoreCount[opt.type]++;
+            const b = document.createElement('button');
+            b.className = 'option-btn';
+            b.innerText = opt.t;
+            b.onclick = () => {
+                scores[opt.type]++;
                 if (currentIdx < questions.length - 1) {
                     currentIdx++;
                     showQuestion();
                 } else {
-                    calculateFinal();
+                    const final = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+                    renderResult(final, false);
                 }
             };
-            optionsDiv.appendChild(btn);
+            optionsDiv.appendChild(b);
         });
-    }
-
-    function calculateFinal() {
-        const finalType = Object.keys(scoreCount).reduce((a, b) => scoreCount[a] > scoreCount[b] ? a : b);
-        renderResult(finalType, false);
     }
 
     function renderResult(type, isFromScan) {
         document.getElementById('quiz-part').classList.add('hidden');
         document.getElementById('result-part').classList.remove('hidden');
-
         const res = resultsData[type];
         document.getElementById('res-name').innerText = res.name;
         document.getElementById('res-desc').innerText = res.desc;
@@ -174,37 +140,28 @@
         contentDiv.innerHTML = '';
 
         if (isFromScan) {
-            // 手機端：顯示下載圖
-            document.getElementById('action-hint').innerHTML = "✨ 分析完成！<br><b>長按下方圖片即可儲存至相簿</b>";
-            generateCanvasImage(contentDiv);
+            document.getElementById('action-hint').innerHTML = "✨ 分析完成！<br><b>長按下方圖片即可儲存</b>";
+            setTimeout(() => {
+                html2canvas(document.getElementById('capture-area'), {scale:2}).then(canvas => {
+                    const img = new Image();
+                    img.src = canvas.toDataURL("image/png");
+                    contentDiv.appendChild(img);
+                });
+            }, 500);
         } else {
-            // iPad 店端：顯示 QR Code 讓客人掃
-            document.getElementById('action-hint').innerText = "請掃描下方 QR Code 領取您的保養提案";
+            document.getElementById('action-hint').innerText = "請掃描下方 QR Code 領取您的結果圖";
             const resultUrl = window.location.origin + window.location.pathname + "?type=" + type;
             const qrBox = document.createElement('div');
-            qrBox.style.display = "flex"; qrBox.style.justifyContent = "center"; qrBox.style.padding = "20px";
+            qrBox.id = "qr-display-box";
             contentDiv.appendChild(qrBox);
-            new QRCode(qrBox, { text: resultUrl, width: 110, height: 110 });
+            // 這裡設定尺寸為 88px (220 * 0.4 = 88)
+            new QRCode(qrBox, { text: resultUrl, width: 88, height: 88 });
         }
-    }
-
-    function generateCanvasImage(targetDiv) {
-        setTimeout(() => {
-            html2canvas(document.getElementById('capture-area'), { scale: 2 }).then(canvas => {
-                const img = new Image();
-                img.src = canvas.toDataURL("image/png");
-                targetDiv.appendChild(img);
-            });
-        }, 500);
     }
 
     function goToStart() {
         window.location.href = window.location.origin + window.location.pathname;
     }
-
-    init();
 </script>
-
 </body>
 </html>
-
