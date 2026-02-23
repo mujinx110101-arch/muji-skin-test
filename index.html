@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUJI 無印良品 - 簡易膚質檢測小遊戲</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --muji-red: #7F0019;
+            --muji-bg: #f4f1f0;
+            --muji-text: #333333;
+            --muji-gray: #666666;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--muji-bg);
+            color: var(--muji-text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app-container {
+            width: 90%;
+            max-width: 450px;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            border-radius: 2px;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        h1 { font-size: 1.5rem; margin-bottom: 20px; letter-spacing: 2px; }
+        p { color: var(--muji-gray); line-height: 1.6; }
+
+        /* 按鈕樣式 */
+        .btn {
+            background-color: var(--muji-red);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: opacity 0.3s;
+            width: 100%;
+            letter-spacing: 1px;
+        }
+        .btn:hover { opacity: 0.8; }
+
+        .option-btn {
+            background-color: #fff;
+            color: var(--muji-text);
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .option-btn:hover { background-color: #f9f9f9; border-color: #999; }
+
+        /* 結果圖片區域 */
+        #result-card {
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .result-title { font-size: 1.2rem; color: var(--muji-red); font-weight: bold; margin-bottom: 10px; }
+        .product-img { width: 120px; height: auto; margin: 15px 0; }
+        .tips { text-align: left; font-size: 0.85rem; background: #fdfdfd; padding: 10px; border-top: 1px dashed #ccc; }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div id="start-screen" class="screen active">
+        <h1 style="color: var(--muji-red);">MUJI 無印良品</h1>
+        <h2>膚質測驗小遊戲</h2>
+        <p>找出最適合您的保養提案</p>
+        <button class="btn" onclick="startQuiz()">開始檢測</button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <p id="question-number" style="font-size: 0.8rem;"></p>
+        <h3 id="question-text">題目載入中...</h3>
+        <div id="options-container"></div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div id="result-card">
+            <p>您的膚質檢測結果</p>
+            <div class="result-title" id="skin-type-name"></div>
+            <div id="skin-description" style="font-size: 0.9rem; margin-bottom: 15px;"></div>
+            
+            <p style="font-size: 0.8rem; font-weight: bold; border-top: 1px solid #eee; pt-10">【 推薦保養品 】</p>
+            <div id="recommended-product"></div>
+            
+            <div class="tips">
+                <p style="font-weight: bold; margin-bottom: 5px;">保養建議：</p>
+                <div id="care-tips"></div>
+            </div>
+            <p style="font-size: 0.6rem; color: #999; margin-top: 10px;">MUJI SKINCARE GUIDE</p>
+        </div>
+
+        <p style="font-size: 0.8rem;">掃描或長按下載結果圖</p>
+        <div id="qrcode"></div>
+
+        <button class="btn" onclick="downloadResult()">下載結果圖片</button>
+        <button class="btn" style="background: #666; margin-top: 10px;" onclick="location.reload()">重新檢測</button>
+    </div>
+</div>
+
+<script>
+    // 測驗題目數據
+    const questions = [
+        {
+            q: "您洗臉後的狀態是？",
+            options: [
+                { text: "T字部位油、兩頰乾", type: "mixed" },
+                { text: "全臉出油", type: "oily" },
+                { text: "緊繃乾燥", type: "dry" },
+                { text: "不油不乾", type: "normal" },
+                { text: "紅癢刺痛", type: "sensitive" }
+            ]
+        },
+        {
+            q: "是否常出現局部油、局部脫皮的狀況？",
+            options: [
+                { text: "是", type: "mixed" },
+                { text: "否", type: "normal" },
+                { text: "常常整臉油光", type: "oily" }
+            ]
+        },
+        {
+            q: "是否容易冒痘與毛孔粗大？",
+            options: [
+                { text: "是", type: "oily" },
+                { text: "否（只是出油）", type: "mixed" },
+                { text: "還有紅腫痛癢問題", type: "sensitive" }
+            ]
+        }
+    ];
+
+    // 結果資料庫
+    const resultsData = {
+        "mixed": {
+            name: "混合性肌膚",
+            desc: "您的肌膚在不同區域有油脂分泌不均的情況。",
+            product: "敏感肌化妝水(清爽型) + 導入精華液",
+            tips: "1. 分區保養：兩頰加強保濕，T字保持清爽。<br>2. 使用溫水洗臉。<br>3. 定期去角質。"
+        },
+        "oily": {
+            name: "油性肌膚",
+            desc: "皮脂分泌旺盛，容易感覺油膩且毛孔較明顯。",
+            product: "清新保養系列 化妝水",
+            tips: "1. 選擇清爽型凝膠。<br>2. 確實做好清潔。<br>3. 補充水分避免代償性出油。"
+        },
+        "dry": {
+            name: "乾性肌膚",
+            desc: "肌膚缺乏水分與油脂，容易感到緊繃甚至脫皮。",
+            product: "保濕型 敏感肌化妝水 + 乳霜",
+            tips: "1. 增加油脂鎖水。<br>2. 減少洗臉次數。<br>3. 使用潤澤度高的乳液。"
+        },
+        "sensitive": {
+            name: "敏感性肌膚",
+            desc: "屏障較弱，容易受環境或成分刺激引起紅癢。",
+            product: "敏感肌保養系列 (低刺激)",
+            tips: "1. 簡化保養步驟。<br>2. 避免酒精與香料。<br>3. 注意防曬。"
+        },
+        "normal": {
+            name: "中性肌膚",
+            desc: "恭喜！您的肌膚油水平衡，是最理想的狀態。",
+            product: "溫和保養系列",
+            tips: "1. 維持現有規律保養。<br>2. 隨著季節微調保濕度。<br>3. 保持充足睡眠。"
+        }
+    };
+
+    let currentStep = 0;
+    let scores = { mixed: 0, oily: 0, dry: 0, sensitive: 0, normal: 0 };
+
+    function startQuiz() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = questions[currentStep];
+        document.getElementById('question-number').innerText = `Question ${currentStep + 1} / ${questions.length}`;
+        document.getElementById('question-text').innerText = q.q;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => nextStep(opt.type);
+            container.appendChild(btn);
+        });
+    }
+
+    function nextStep(type) {
+        scores[type]++;
+        currentStep++;
+        if (currentStep < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+
+        // 計算最高分的類型
+        const finalType = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+        const result = resultsData[finalType];
+
+        document.getElementById('skin-type-name').innerText = result.name;
+        document.getElementById('skin-description').innerText = result.desc;
+        document.getElementById('recommended-product').innerHTML = `<strong>${result.product}</strong>`;
+        document.getElementById('care-tips').innerHTML = result.tips;
+
+        // 生成 QR Code (連結至目前網址或 MUJI 官網)
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 80,
+            height: 80,
+            colorDark : "#333333",
+            colorLight : "#ffffff"
+        });
+    }
+
+    // 將結果卡片轉為圖片下載
+    function downloadResult() {
+        const card = document.getElementById('result-card');
+        html2canvas(card).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'MUJI-Skin-Result.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+</script>
+
+</body>
+</html>
